@@ -19,10 +19,12 @@ async function run() {
     await client.connect();
     const engineCollection = client.db("Car-engine").collection("service");
 
+    // Load all data
     app.get("/service", async (req, res) => {
       const services = await engineCollection.find({}).toArray();
       res.send(services);
     });
+    // update the quantity
   } finally {
   }
 }

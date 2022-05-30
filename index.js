@@ -70,11 +70,19 @@ async function run() {
       }
     });
 
+    //Delete
     app.delete("/purchase/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const deleteItem = await purchaseCollection.deleteOne(filter);
       res.send(deleteItem);
+    });
+
+    app.get("/purchase/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await purchaseCollection.findOne(filter);
+      res.send(result);
     });
 
     // post

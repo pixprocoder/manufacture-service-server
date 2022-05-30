@@ -15,6 +15,22 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ massage: "unAuthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, function (error, decoded) {
+    if (error) {
+      return res.status(403).send({ massage: "forbidden" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     await client.connect();
@@ -34,6 +50,24 @@ async function run() {
       const filter = { _id: ObjectId(id) };
       const service = await engineCollection.findOne(filter);
       res.send(service);
+    });
+
+    // get all users
+    app.get("/user", verifyJWT, async (req, res) => {
+      const users = await userCollection.find().toArray();
+      res.send(users);
+    });
+
+    app.get("/purchase", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (email === decodedEmail) {
+        const query = { email: email };
+        const result = await purchaseCollection.find(query).toArray();
+        res.send(result);
+      } else {
+        res.status(403).send({ massage: "forbidden access" });
+      }
     });
 
     // post
@@ -59,6 +93,16 @@ async function run() {
         { expiresIn: "1d" }
       );
       res.send({ result, token });
+    });
+
+    app.put("/user/admin/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const updateDoc = {
+        $set: { status: "admin" },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
   } finally {
   }

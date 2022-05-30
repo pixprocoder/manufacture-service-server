@@ -70,6 +70,13 @@ async function run() {
       }
     });
 
+    app.delete("/purchase/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const deleteItem = await purchaseCollection.deleteOne(filter);
+      res.send(deleteItem);
+    });
+
     // post
     app.post("/purchase", async (req, res) => {
       const purchase = req.body;
@@ -95,14 +102,29 @@ async function run() {
       res.send({ result, token });
     });
 
+    app.get("/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await userCollection.findOne({ email: email });
+      const isAdmin = user.status === "admin";
+      res.send({ admin: isAdmin });
+    });
+
     app.put("/user/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
-      const filter = { email: email };
-      const updateDoc = {
-        $set: { status: "admin" },
-      };
-      const result = await userCollection.updateOne(filter, updateDoc);
-      res.send(result);
+      const requester = req.decoded.email;
+      const requesterPerson = await userCollection.findOne({
+        email: requester,
+      });
+      if (requesterPerson.status === "admin") {
+        const filter = { email: email };
+        const updateDoc = {
+          $set: { status: "admin" },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } else {
+        return res.send({ massage: "you cannot make and admin" });
+      }
     });
   } finally {
   }

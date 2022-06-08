@@ -6,6 +6,7 @@ const cors = require("cors");
 const port = process.env.PORT || 5000;
 const app = express();
 
+//Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -138,13 +139,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-// client.connect((err) => {
-//   const collection = client.db("test").collection("devices");
-//   // perform actions on the collection object
-//   console.log("db connected");
-//   client.close();
-// });
 
 app.get("/", (req, res) => {
   res.send("server is running");

@@ -2,6 +2,10 @@ const express = require("express");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(
+  "sk_test_51L48bjAevmEdl8xn6Vdal3tgHRkoPnPbrr1EJ2S4d8Q7q7PNalpuC96XmDy2s3z7upIR4Qg6fukw7f490wdipKuw00pNfcXWNq"
+);
+
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 const app = express();
@@ -10,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@cluster0.8dm4o.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://carEngine:bG9MZU7x0R0YkpgO@cluster0.8dm4o.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -134,6 +138,24 @@ async function run() {
       } else {
         return res.send({ massage: "you cannot make and admin" });
       }
+    });
+
+    // stripe payment route
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+
+      const amount = parseInt(price * 100);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
     });
   } finally {
   }
